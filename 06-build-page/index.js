@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const {copyFile} = require('fs/promises');
+const { copyFile } = require('fs/promises');
 
 
 fs.mkdir(path.join(__dirname, 'project-dist'), { recursive: true }, err => { if(err) throw err });
@@ -43,31 +43,24 @@ fs.readdir(path.join(__dirname, 'assets'), { recursive: true }, (err, directory)
   }
 });
 
-const writeStream = fs.createWriteStream(path.join(__dirname, 'project-dist/index.html'), { withFileTypes: true });
-const readStream = fs.createReadStream(path.join(__dirname, 'template.html'), 'utf-8');
-readStream.on('data', chunk => {
-  let str = chunk;
-  
-  fs.readdir(path.join(__dirname, 'components'), (err, data) => {
-    if(err) throw err;
-    else {
-      let arr = [];
-      data.forEach( file => {
-        arr.push(file)
-      });
+fs.readFile(path.join(__dirname, 'template.html'), 'utf-8', (err, file) => {
+  if(err) throw err;
 
-      for(let i = 0; i < arr.length; i++) {
-        let name = path.basename(arr[i]).split('.', 1).join('');
-        fs.readFile(path.join(__dirname, 'components', arr[i]), { withFileTypes: true }, (err, fileDate) => {
-          if(err) throw err;
-          else {
-            str = str.replace(`{{${name}}}`, fileDate.toString());
-            if(i == arr.length - 1) {
-              writeStream.write(str);
-            }
-          }
-        })
-      }
+  let content = file;
+  fs.readdir(path.join(__dirname, 'components'), 'utf-8',(err, data) => {
+    if(err) throw err;
+    let arr = [];
+
+    data.forEach( file => {
+      arr.push(file)
+    });
+
+    for(let i = 0; i < arr.length; i++) {
+      fs.readFile(path.join(__dirname, 'components', arr[i]), 'utf-8', (err, fileDate) => {
+        if(err) throw err;
+        content = content.replace(`{{${path.basename(arr[i]).split('.', 1)}}}`, fileDate);
+        fs.writeFile(path.join(__dirname, 'project-dist/index.html'), content, err => { if(err) throw err });
+      })
     }
   })
 });
